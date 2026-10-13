@@ -56,6 +56,7 @@ class Store {
 const store = new Store();
 let created = null;
 const stripe = {
+  taxRates: { list: async () => ({ data: [] }), create: async (p) => ({ id: 'txr_1', ...p }) },
   checkout: { sessions: { create: async (p) => { created = p; return { id: 'cs_test_1', url: 'https://checkout.stripe.com/c/pay/cs_test_1' }; } } },
   webhooks: { constructEvent: (raw, sig, sec) => { if (sig !== 'ok' || sec !== 'whsec_x') throw new Error('bad'); return JSON.parse(raw); } },
   invoices: { retrieve: async () => ({ number: 'NEXIA-0001', hosted_invoice_url: 'https://invoice.stripe.com/i/x', invoice_pdf: null }) }
@@ -75,7 +76,7 @@ assert.equal(r.status, 200); assert.ok(j.url.startsWith('https://checkout.stripe
 assert.equal(created.line_items[0].price_data.unit_amount, 3200, 'importe calculado en servidor');
 assert.equal(created.customer_email, 'ana@x.es');
 assert.ok(created.success_url.startsWith('https://nexianfc.com/configurar.html?pago=ok&pedido=NX-'), 'no acepta retornos de otros dominios: ' + created.success_url);
-assert.equal(created.automatic_tax.enabled, true);
+assert.equal(created.automatic_tax, undefined); assert.deepEqual(created.line_items[0].tax_rates, ['txr_1']); assert.equal(created.line_items[0].price_data.tax_behavior, undefined);
 assert.ok(created.invoice_creation.invoice_data.description.includes('10 tarjetas'));
 const oid = j.pedido;
 console.log('crear-pago OK ·', oid, '· 32,00 € sin IVA ->', j.total, 'con IVA');

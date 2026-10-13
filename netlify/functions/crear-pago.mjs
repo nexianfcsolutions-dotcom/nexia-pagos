@@ -5,7 +5,7 @@ import { crearPagoHandler, respuestaError } from '../../lib/handlers.mjs';
 
 // Acepta el nombre en mayúsculas o en minúsculas (Netlify distingue entre ambos).
 const leer = (k) => Netlify.env.get(k) || Netlify.env.get(k.toLowerCase());
-const leerEnv = () => Object.fromEntries(['STRIPE_WEBHOOK_SECRET', 'RESEND_API_KEY', 'SELLER_EMAIL', 'SITE_URL', 'FROM_EMAIL'].map((k) => [k, leer(k)]));
+const leerEnv = () => Object.fromEntries(['STRIPE_WEBHOOK_SECRET', 'RESEND_API_KEY', 'SELLER_EMAIL', 'SITE_URL', 'FROM_EMAIL', 'USAR_STRIPE_TAX'].map((k) => [k, leer(k)]));
 
 export default async (req) => {
   try {
