@@ -4,3 +4,9 @@
 [functions]
   directory = "netlify/functions"
   node_bundler = "esbuild"
+
+# Página de prueba interna (modo prueba de Stripe): que no salga en buscadores
+[[headers]]
+  for = "/prueba-pago/*"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
