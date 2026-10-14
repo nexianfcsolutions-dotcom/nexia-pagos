@@ -20,7 +20,9 @@ if (SCR && fs.existsSync(SCR)) {
       ndis: pick(['1', '1', '1', '2', '3']), cant: pick(['1', '5', '10', '25', '50', 'otra']), cantN: String(1 + Math.floor(Math.random() * 70))
     };
     const w = c.qPrice(ans), s = calcular(ans);
-    assert.equal(!!s.ok, !!w.canPay, 'canPay distinto: ' + JSON.stringify(ans));
+    // Mientras el servidor de pagos no esté desplegado con placa/soporte, la web no los cobra online (PAGO_ONLINE): se compara solo el importe.
+    const sinCobro = ans.formato === 'placa' || ans.formato === 'soporte';
+    if (!sinCobro) assert.equal(!!s.ok, !!w.canPay, 'canPay distinto: ' + JSON.stringify(ans));
     if (s.ok) { assert.equal(s.neto, w.netNum, 'neto distinto: ' + JSON.stringify(ans)); assert.equal(s.total, w.totalIva, 'total distinto'); n++; }
   }
   console.log('precios iguales a la web en 4000 pedidos aleatorios (' + n + ' de pago fijo)');
