@@ -15,7 +15,7 @@ if (SCR && fs.existsSync(SCR)) {
   const pick = (a) => a[Math.floor(Math.random() * a.length)];
   for (let i = 0; i < 4000; i++) {
     const ans = {
-      formato: pick(['tarjeta', 'tarjeta', 'tarjeta', 'placa']), path: pick(['propio', 'portal']), pnivel: pick(['basico', 'completo']),
+      formato: pick(['tarjeta', 'tarjeta', 'placa', 'soporte', 'otro']), path: pick(['propio', 'portal']), pnivel: pick(['basico', 'completo']),
       material: pick(['pvc', 'acrilico']), chip: pick(['estandar', 'pro', 'super']), caras: pick(['1', '2']), diseno: pick(['propio', 'nexia', 'ayuda']),
       ndis: pick(['1', '1', '1', '2', '3']), cant: pick(['1', '5', '10', '25', '50', 'otra']), cantN: String(1 + Math.floor(Math.random() * 70))
     };
@@ -42,6 +42,11 @@ assert.equal(calcular({ ...base, cant: '5', path: 'portal', pnivel: 'completo' }
 assert.equal(calcular({ ...base, cant: '5', ndis: '2' }).ok, false);
 assert.equal(calcular({ ...base, cant: '-3' }).ok, false);
 assert.equal(calcular({ ...base, cant: 'otra', cantN: '2.5' }).ok, true); // parseInt -> 2
+assert.equal(ok({ ...base, formato: 'placa', cant: '10' }).neto, 30);          // placa = como tarjeta
+assert.equal(ok({ ...base, formato: 'soporte', cant: '5' }).neto, 40);          // soporte = 2 x tramo de tarjeta (2 x 4 = 8 € cada uno)
+assert.equal(ok({ ...base, formato: 'soporte', cant: '1' }).neto, 10);
+assert.equal(ok({ ...base, formato: 'soporte', cant: '10', chip: 'pro', material: 'acrilico', diseno: 'nexia' }).neto, 60 + 15 + 7);
+assert.equal(calcular({ ...base, formato: 'otro', cant: '5' }).ok, false);
 assert.equal(calcular({}).ok, false);
 console.log('casos fijos de precio OK');
 
