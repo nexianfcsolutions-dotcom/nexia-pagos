@@ -4,7 +4,10 @@
   "private": true,
   "type": "module",
   "description": "Funciones de pago de NEXIA: calcula el precio en el servidor, crea el pago en Stripe y envía los correos del pedido cuando se paga.",
-  "scripts": { "test": "node test/run.mjs" },
+  "scripts": {
+    "test": "node test/run.mjs",
+    "sync-precios": "node -e \"require('fs').copyFileSync((process.env.WEB_DIR || '../nexia-web') + '/precios.js', 'lib/precios.cjs')\""
+  },
   "dependencies": {
     "@netlify/blobs": "^8.1.0",
     "stripe": "^17.5.0"
