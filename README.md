@@ -1,13 +1,19 @@
 # NEXIA · función de pagos
 
-Pequeño servicio (Netlify Functions) que hace de "caja" de la tienda de NEXIA:
+Pequeño servicio (Cloudflare Workers; también puede funcionar en Netlify Functions) que hace de "caja" de la tienda de NEXIA:
 
 1. `POST /api/crear-pago`: recibe el pedido del configurador, **recalcula el precio en el servidor** (`lib/pricing.mjs`), guarda el pedido y crea un pago de Stripe con ese importe fijo. Devuelve la dirección de pago.
 2. `POST /api/webhook-stripe`: Stripe avisa aquí cuando el cliente ha pagado. Entonces se envían dos correos al vendedor: (1) venta cobrada con la factura en PDF, (2) pedido con todas las especificaciones y los archivos del cliente. El cliente recibe de Stripe el recibo con la factura.
 
 El pedido no llega a NEXIA hasta que el pago está hecho.
 
-## Variables de entorno (Netlify > Project configuration > Environment variables)
+## Cloudflare Workers
+- Entrada: `worker/index.mjs`; configuración: `wrangler.toml` (nombre `nexia-pagos`, almacén KV `PEDIDOS`, página de prueba en `public/`).
+- Se despliega solo desde GitHub (Cloudflare > Workers & Pages > nexia-pagos > Settings > Builds).
+- Probar en local: `npm run cf:dev` (las claves de prueba van en `.dev.vars`, que no se sube).
+- Los secretos de abajo se ponen en Cloudflare > Workers & Pages > nexia-pagos > Settings > Variables and Secrets (tipo *Secret*).
+
+## Variables de entorno
 | Variable | Qué es |
 |---|---|
 | `STRIPE_SECRET_KEY` | Clave secreta de Stripe (`sk_test_…` en pruebas, `sk_live_…`/restringida en real) |

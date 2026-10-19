@@ -124,7 +124,7 @@ let created = null;
 const stripe = {
   taxRates: { list: async () => ({ data: [] }), create: async (p) => ({ id: 'txr_1', ...p }) },
   checkout: { sessions: { create: async (p) => { created = p; return { id: 'cs_test_1', url: 'https://checkout.stripe.com/c/pay/cs_test_1' }; } } },
-  webhooks: { constructEvent: (raw, sig, sec) => { if (sig !== 'ok' || sec !== 'whsec_x') throw new Error('bad'); return JSON.parse(raw); } },
+  webhooks: { constructEventAsync: async (raw, sig, sec) => { if (sig !== 'ok' || sec !== 'whsec_x') throw new Error('bad'); return JSON.parse(raw); } },
   invoices: { retrieve: async () => ({ number: 'NEXIA-0001', hosted_invoice_url: 'https://invoice.stripe.com/i/x', invoice_pdf: null }) }
 };
 let rn = 0; const randomInt = (n) => (rn++ * 7) % n;
@@ -209,4 +209,17 @@ await resendSender({ RESEND_API_KEY: 'k' }, async (u, o) => { sent = { u, o }; r
 const body = JSON.parse(sent.o.body);
 assert.equal(sent.u, 'https://api.resend.com/emails'); assert.equal(body.from, 'NEXIA Pedidos <onboarding@resend.dev>'); assert.deepEqual(body.to, ['v@x.es']);
 console.log('Resend OK');
+
+// Cloudflare: el adaptador de KV se comporta como el almacén de Netlify
+const { almacenKV } = await import('../worker/index.mjs').catch(() => ({}));
+if (almacenKV) {
+  const m = new Map(); const ttl = {};
+  const kv = { put: async (k, v, o) => { m.set(k, v); if (o) ttl[k] = o.expirationTtl; }, delete: async (k) => { m.delete(k); },
+    get: async (k, o) => { if (!m.has(k)) return null; const v = m.get(k); return o.type === 'json' ? JSON.parse(v) : v; } };
+  const st = almacenKV(kv);
+  await st.setJSON('a', { x: 1 }); assert.deepEqual(await st.get('a', { type: 'json' }), { x: 1 });
+  await st.set('archivo:1', new Uint8Array([1, 2])); assert.ok(ttl['archivo:1'] > 0, 'los archivos caducan');
+  await st.delete('a'); assert.equal(await st.get('a', { type: 'json' }), null);
+  console.log('almacén Cloudflare KV OK');
+}
 console.log('\nTODO CORRECTO');
