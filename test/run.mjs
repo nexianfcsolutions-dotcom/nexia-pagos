@@ -1,32 +1,78 @@
 import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import P from '../lib/precios.cjs';
 import assert from 'node:assert/strict';
 import { calcular } from '../lib/pricing.mjs';
 import { crearPagoHandler, webhookHandler, resendSender } from '../lib/handlers.mjs';
 
-// ---- 1) mismo precio que el configurador de la web ----
-const SCR = process.env.CONFIG_HTML;
-if (SCR && fs.existsSync(SCR)) {
-  const html = fs.readFileSync(SCR, 'utf8');
-  const m = html.match(/<script type="text\/x-dc" data-dc-script[^>]*>([\s\S]*?)<\/script>/);
+// ---- 1) misma tabla y mismo precio que la web (nexia-web) ----
+// WEB_DIR = carpeta de nexia-web. Por defecto ../nexia-web si existe al lado de este repo.
+const WEB = process.env.WEB_DIR || path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..', 'nexia-web');
+if (fs.existsSync(path.join(WEB, 'precios.js'))) {
+  const leer = (f) => fs.readFileSync(path.join(WEB, f), 'utf8');
+  // a) precios.cjs es una copia exacta de nexia-web/precios.js
+  assert.equal(fs.readFileSync(new URL('../lib/precios.cjs', import.meta.url), 'utf8'), leer('precios.js'),
+    'lib/precios.cjs no es igual a nexia-web/precios.js: ejecuta `npm run sync-precios`');
+  // b) las páginas cargan precios.js y su lógica da el mismo importe que el servidor
   class DCLogic { constructor() { this.state = {}; } setState(o) { this.state = Object.assign({}, this.state, o); } }
-  const C = new Function('DCLogic', m[1] + ';return Component')(DCLogic);
-  const c = new C();
-  let n = 0;
+  const componente = (f) => {
+    const html = leer(f);
+    assert.ok(html.includes('<script src="./precios.js"></script>'), f + ' no carga precios.js');
+    const m = html.match(/<script type="text\/x-dc" data-dc-script[^>]*>([\s\S]*?)<\/script>/);
+    const C = new Function('DCLogic', 'window', m[1] + ';return Component')(DCLogic, { NEXIA_PRECIOS: P });
+    return { c: new C(), html };
+  };
   const pick = (a) => a[Math.floor(Math.random() * a.length)];
+  const cfg = componente('configurar.html').c;
+  let n = 0;
   for (let i = 0; i < 4000; i++) {
     const ans = {
       formato: pick(['tarjeta', 'tarjeta', 'placa', 'soporte', 'otro']), path: pick(['propio', 'portal']), pnivel: pick(['basico', 'completo']),
       material: pick(['pvc', 'acrilico']), chip: pick(['estandar', 'pro', 'super']), caras: pick(['1', '2']), diseno: pick(['propio', 'nexia', 'ayuda']),
       ndis: pick(['1', '1', '1', '2', '3']), cant: pick(['1', '5', '10', '25', '50', 'otra']), cantN: String(1 + Math.floor(Math.random() * 70))
     };
-    const w = c.qPrice(ans), s = calcular(ans);
+    const w = cfg.qPrice(ans), s = calcular(ans);
     // Mientras el servidor de pagos no esté desplegado con placa/soporte, la web no los cobra online (PAGO_ONLINE): se compara solo el importe.
     const sinCobro = ans.formato === 'placa' || ans.formato === 'soporte';
     if (!sinCobro) assert.equal(!!s.ok, !!w.canPay, 'canPay distinto: ' + JSON.stringify(ans));
     if (s.ok) { assert.equal(s.neto, w.netNum, 'neto distinto: ' + JSON.stringify(ans)); assert.equal(s.total, w.totalIva, 'total distinto'); n++; }
   }
-  console.log('precios iguales a la web en 4000 pedidos aleatorios (' + n + ' de pago fijo)');
-} else console.log('(se salta la comparación con la web: define CONFIG_HTML)');
+  console.log('configurador: mismo precio que el servidor en 4000 pedidos aleatorios (' + n + ' de pago fijo)');
+
+  const pre = componente('precios.html');
+  let m2 = 0;
+  for (let i = 0; i < 4000; i++) {
+    const a = {
+      fmt: pick(['tarjeta', 'placa', 'soporte']), portal: pick(['propio', 'basico', 'completo']), mat: pick(['pvc', 'acrilico']),
+      chip: pick(['estandar', 'pro', 'super']), caras: pick(['1', '2']), dis: pick(['nexia', 'propio']),
+      cant: pick(['1', '5', '10', '25', '50', 'otra']), cantN: String(1 + Math.floor(Math.random() * 70))
+    };
+    const w = pre.c.pCalc(a);
+    const s = calcular({ formato: a.fmt, path: a.portal === 'propio' ? 'propio' : 'portal', pnivel: a.portal, material: a.mat, chip: a.chip,
+      caras: a.caras, diseno: a.dis, ndis: '1', cant: a.cant, cantN: a.cantN });
+    if (s.ok) { assert.equal(w.total, s.neto, 'calculadora distinta: ' + JSON.stringify(a)); m2++; }
+    else if (a.portal !== 'completo') assert.ok(w.custom, 'la calculadora da precio y el servidor no: ' + JSON.stringify(a));
+  }
+  console.log('calculadora de precios.html: mismo precio que el servidor (' + m2 + ' casos)');
+
+  // c) los precios escritos a mano en precios.html coinciden con la tabla
+  const texto = pre.html.replace(/<script[\s\S]*?<\/script>/g, ' ').replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ');
+  const f = P.fmt;
+  const esperados = [
+    'Desde ' + f(P.unidad(1, 'tarjeta')),
+    'Portal básico ' + f(P.portalBasico) + ' por portal', 'Portal avanzado ' + f(P.portalCompleto) + ' por portal',
+    'Acrílico (+' + f(P.acrilico) + ' por tarjeta)', '+' + f(P.chip.pro) + ' por tarjeta', '+' + f(P.chip.super) + ' por tarjeta',
+    '2 caras (+' + f(P.caras2) + ' por tarjeta)', 'Son ' + f(P.diseno) + ' por cada diseño'
+  ];
+  for (const [n] of P.tramos) {
+    const u = P.unidad(n, 'tarjeta'), lote = P.r2(n * u), conDis = P.r2(lote + P.diseno);
+    esperados.push((n === 1 ? '1 tarjeta' : 'Lote de ' + n) + ' ' + f(lote) + ' ' + f(u) + ' / tarjeta ' + f(conDis) + ' ' + f(conDis / n) + ' / tarjeta');
+  }
+  const faltan = esperados.filter((e) => !texto.includes(e));
+  assert.deepEqual(faltan, [], 'precios.html tiene textos con precios que no coinciden con precios.js (o se han reescrito): ' + faltan.join(' | '));
+  console.log('textos de precios.html coinciden con la tabla (' + esperados.length + ' comprobaciones)');
+} else console.log('(se salta la comparación con la web: no se encuentra nexia-web; define WEB_DIR)');
 
 // ---- 2) casos fijos ----
 const ok = (a) => { const r = calcular(a); assert.ok(r.ok); return r; };
