@@ -25,3 +25,5 @@ id = "f912ac4702bb4613b7a3720c7e984864"
 # con él, el cliente también recibe un correo de NEXIA con su pedido.
 [vars]
 FROM_EMAIL = "pedidos@nexianfc.com"
+# Tipo de IVA 21 % ya creado en Stripe (modo real, metadata nexia=iva21). Con él no hace falta permiso de Tax Rates.
+IVA_TAX_RATE_ID = "txr_1UQ48oAy1aPZblSjNNyjQr3v"

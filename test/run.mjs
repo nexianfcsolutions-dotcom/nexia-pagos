@@ -195,6 +195,24 @@ assert.equal(await importe({ ...conDis, dato: '600 000 000' }), 4498, 'su teléf
 assert.equal(await importe({ ...conDis, dato: '611222333' }), 2999);
 console.log('promo primera compra OK');
 
+// IVA_TAX_RATE_ID: no se consulta la lista de tipos de IVA; y un fallo de Stripe devuelve su código en el error
+{
+  let listados = 0, sesion = null;
+  const st2 = { ...stripe, taxRates: { list: async () => { listados++; return { data: [] }; }, create: async () => ({ id: 'txr_nuevo' }) },
+    checkout: { sessions: { create: async (p) => { sesion = p; return { id: 'cs_2', url: 'https://checkout.stripe.com/x' }; } } } };
+  const cr = crearPagoHandler({ stripe: st2, store: new Store(), env: { IVA_TAX_RATE_ID: 'txr_fijo' }, randomInt });
+  const fx = new FormData(); fx.append('ans', JSON.stringify({ ...base, cant: '1' }));
+  assert.equal((await cr(new Request('https://x', { method: 'POST', body: fx }))).status, 200);
+  assert.equal(listados, 0); assert.deepEqual(sesion.line_items[0].tax_rates, ['txr_fijo']);
+  const err = Object.assign(new Error('The provided key does not have the required permissions'), { type: 'StripePermissionError', statusCode: 403 });
+  const st3 = { ...st2, checkout: { sessions: { create: async () => { throw err; } } } };
+  const fy = new FormData(); fy.append('ans', JSON.stringify({ ...base, cant: '1' }));
+  const ry = await crearPagoHandler({ stripe: st3, store: new Store(), env: { IVA_TAX_RATE_ID: 'txr_fijo' }, randomInt })(new Request('https://x', { method: 'POST', body: fy }));
+  const jy = await ry.json();
+  assert.equal(ry.status, 502); assert.ok(jy.error.includes('(StripePermissionError/403)'), jy.error); assert.ok(!jy.error.includes('provided key'));
+  console.log('IVA fijo y código de error de Stripe OK');
+}
+
 // importe distinto al esperado -> aviso
 const f3 = new FormData(); f3.append('ans', JSON.stringify({ ...base, cant: '5' }));
 const j3 = await (await crear(new Request('https://x', { method: 'POST', body: f3 }))).json();

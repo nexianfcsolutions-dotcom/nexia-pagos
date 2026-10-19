@@ -1,11 +1,11 @@
 // Entrada del servicio de pagos (Cloudflare Workers): lee la configuración y monta
 // las dependencias reales (Stripe, almacén de pedidos en Cloudflare KV, correo con Resend). Toda la lógica está en lib/handlers.mjs.
 // Secretos (Cloudflare > Workers > nexia-pagos > Settings > Variables and Secrets): STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, RESEND_API_KEY.
-// Opcionales: SELLER_EMAIL, SITE_URL, FROM_EMAIL, USAR_STRIPE_TAX. Almacén: KV con el nombre de enlace PEDIDOS (wrangler.toml).
+// Opcionales: SELLER_EMAIL, SITE_URL, FROM_EMAIL, USAR_STRIPE_TAX, IVA_TAX_RATE_ID. Almacén: KV con el nombre de enlace PEDIDOS (wrangler.toml).
 import Stripe from 'stripe';
 import { crearPagoHandler, webhookHandler, resendSender, respuestaError } from '../lib/handlers.mjs';
 
-const CLAVES = ['STRIPE_WEBHOOK_SECRET', 'RESEND_API_KEY', 'SELLER_EMAIL', 'SITE_URL', 'FROM_EMAIL', 'USAR_STRIPE_TAX'];
+const CLAVES = ['STRIPE_WEBHOOK_SECRET', 'RESEND_API_KEY', 'SELLER_EMAIL', 'SITE_URL', 'FROM_EMAIL', 'USAR_STRIPE_TAX', 'IVA_TAX_RATE_ID'];
 const ARCHIVOS_TTL = 30 * 24 * 3600; // los archivos de pedidos que nunca se pagan se borran solos a los 30 días
 
 // Adaptador del almacén (set, setJSON, get, delete) sobre Cloudflare KV.

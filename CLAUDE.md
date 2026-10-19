@@ -22,6 +22,8 @@ Servicio de cobro de la tienda de NEXIA en Cloudflare Workers: `https://nexia-pa
 - Nunca subir claves (`sk_…`, `whsec_…`, `re_…`) al repo: van como *Secrets* del Worker en Cloudflare.
 - El webhook debe seguir siendo idempotente (marcas `ventaEnviada`, `pedidoEnviado`, `clienteEnviado`): Stripe puede reenviar el mismo evento.
 - IVA fijo del 21 % con un tipo de IVA de Stripe (`metadata.nexia = 'iva21'`); `USAR_STRIPE_TAX=1` usa Stripe Tax.
+- El tipo de IVA está fijado en `wrangler.toml` (`IVA_TAX_RATE_ID = txr_1UQ48o…`), así la clave de Stripe no necesita permiso de Tax Rates. Permisos mínimos de una clave restringida: Checkout Sessions (escritura) e Invoices (lectura).
+- Si Stripe rechaza la creación del pago, la respuesta 502 incluye el código del fallo (p. ej. `StripePermissionError/403`, `StripeAuthenticationError/401`) para diagnosticarlo desde el navegador.
 - Las URL de vuelta solo pueden ser de `nexianfc.com`, `nexia-pagos.*.workers.dev` o `localhost` (`RETORNOS_OK`).
 - Webhook de Stripe (modo real): `https://nexia-pagos.nexianfcsolutions.workers.dev/api/webhook-stripe`.
 - Correos: Resend con el dominio verificado nexianfc.com; remitente `FROM_EMAIL = pedidos@nexianfc.com` en `wrangler.toml` ([vars]). Al vendedor le llegan «Venta cobrada» y «Pedido pagado»; al cliente, su copia del pedido (y de Stripe, recibo y factura).
