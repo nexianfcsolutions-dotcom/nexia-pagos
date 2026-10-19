@@ -24,4 +24,5 @@ Servicio de cobro de la tienda de NEXIA en Cloudflare Workers: `https://nexia-pa
 - IVA fijo del 21 % con un tipo de IVA de Stripe (`metadata.nexia = 'iva21'`); `USAR_STRIPE_TAX=1` usa Stripe Tax.
 - Las URL de vuelta solo pueden ser de `nexianfc.com`, `nexia-pagos.*.workers.dev` o `localhost` (`RETORNOS_OK`).
 - Webhook de Stripe (modo real): `https://nexia-pagos.nexianfcsolutions.workers.dev/api/webhook-stripe`.
+- Correos: Resend con el dominio verificado nexianfc.com; remitente `FROM_EMAIL = pedidos@nexianfc.com` en `wrangler.toml` ([vars]). Al vendedor le llegan «Venta cobrada» y «Pedido pagado»; al cliente, su copia del pedido (y de Stripe, recibo y factura).
 - Código, mensajes y commits en español.

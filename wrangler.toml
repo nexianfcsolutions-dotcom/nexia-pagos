@@ -20,3 +20,8 @@ directory = "public"
 [[kv_namespaces]]
 binding = "PEDIDOS"
 id = "f912ac4702bb4613b7a3720c7e984864"
+
+# Variables públicas (no secretas). FROM_EMAIL: remitente del dominio verificado en Resend;
+# con él, el cliente también recibe un correo de NEXIA con su pedido.
+[vars]
+FROM_EMAIL = "pedidos@nexianfc.com"
