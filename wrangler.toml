@@ -11,4 +11,4 @@ directory = "public"
 # Almacén de pedidos (Cloudflare > Storage & databases > Workers KV > nexia-pedidos)
 [[kv_namespaces]]
 binding = "PEDIDOS"
-id = "PENDIENTE_ID_KV"
+id = "f912ac4702bb4613b7a3720c7e984864"
