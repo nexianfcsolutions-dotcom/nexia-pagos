@@ -8,6 +8,10 @@ Servicio de cobro de la tienda de NEXIA en `https://nexia-pagos.netlify.app`. Ve
 - `lib/pricing.mjs`: calcula el pedido. **El precio se calcula siempre aquí; nunca se fía del importe que manda el navegador.**
 - `lib/precios.cjs`: tabla de precios. Es una **copia exacta** de `nexia-web/precios.js`, la única fuente. No la edites aquí: cambia la web y ejecuta `npm run sync-precios`.
 
+## Promoción de primera compra
+- `calcular(ans, { primeraCompra })`: con la promo activa (`P.promoDiseno`), el diseño de NEXIA es gratis desde 2 unidades.
+- `crearPagoHandler` decide `primeraCompra` mirando en el almacén las claves `cliente:<correo>` y `cliente:tel:<9 cifras>`; el webhook las guarda cuando un pedido se paga.
+
 ## Pruebas
 - `npm test` (sin red: Stripe, almacén y correo simulados). Con `nexia-web` clonado al lado (o `WEB_DIR=…`) compara además la tabla, el configurador, la calculadora y los textos de `precios.html` con el servidor.
 - Antes de cualquier cambio en precios, webhook o correos: `npm test` tiene que acabar en `TODO CORRECTO`.
