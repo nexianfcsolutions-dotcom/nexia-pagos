@@ -20,14 +20,7 @@ El pedido no llega a NEXIA hasta que el pago está hecho.
 **Nunca** subir claves a este repositorio.
 
 ## Pruebas
-`npm install && npm test` (usa Stripe, almacén y correo simulados). Si `nexia-web` está clonado al lado de este repo (o se indica con `WEB_DIR=ruta/a/nexia-web`), las pruebas además comprueban que:
-- `lib/precios.cjs` es idéntico a `nexia-web/precios.js`,
-- el configurador (`configurar.html`) y la calculadora (`precios.html`) calculan el mismo importe que el servidor,
-- los precios escritos a mano en `precios.html` (tabla de lotes, extras, portales, diseño) coinciden con la tabla.
+`npm install && npm test` (usa Stripe, almacén y correo simulados). Para comparar además con el configurador: `CONFIG_HTML=ruta/Configurar.dc.html npm test`.
 
 ## Si cambian los precios
-La única tabla de precios es **`nexia-web/precios.js`**. Para cambiar un precio:
-1. Cámbialo en `nexia-web/precios.js`.
-2. Aquí: `npm run sync-precios` (copia ese archivo a `lib/precios.cjs`).
-3. `npm test`: si falla por textos de `precios.html`, actualiza esos textos en la web.
-4. Publica las dos cosas: la web (nexia-web) y esta función (deploy en Netlify).
+Hay que cambiarlos en `lib/pricing.mjs` y en el configurador de la web (misma tabla), y volver a lanzar las pruebas.
