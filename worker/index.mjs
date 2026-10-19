@@ -28,12 +28,12 @@ export default {
       if (ruta === '/api/crear-pago') {
         if (req.method === 'OPTIONS') return respuestaError('', 204);
         if (!env.STRIPE_SECRET_KEY) { console.error('Falta STRIPE_SECRET_KEY'); return respuestaError('El pago online aún no está activado.', 503); }
-        const stripe = new Stripe(env.STRIPE_SECRET_KEY, { httpClient: Stripe.createFetchHttpClient() });
+        const stripe = new Stripe(String(env.STRIPE_SECRET_KEY).trim(), { httpClient: Stripe.createFetchHttpClient() });
         return await crearPagoHandler({ stripe, store: almacenKV(env.PEDIDOS), env: conf, randomInt })(req);
       }
       if (ruta === '/api/webhook-stripe') {
         if (!env.STRIPE_SECRET_KEY || !conf.STRIPE_WEBHOOK_SECRET || !conf.RESEND_API_KEY) { console.error('Faltan variables de entorno'); return new Response('No configurado', { status: 503 }); }
-        const stripe = new Stripe(env.STRIPE_SECRET_KEY, { httpClient: Stripe.createFetchHttpClient() });
+        const stripe = new Stripe(String(env.STRIPE_SECRET_KEY).trim(), { httpClient: Stripe.createFetchHttpClient() });
         return await webhookHandler({
           stripe, store: almacenKV(env.PEDIDOS), env: conf, enviar: resendSender(conf),
           esperar: (ms) => new Promise((r) => setTimeout(r, ms))
