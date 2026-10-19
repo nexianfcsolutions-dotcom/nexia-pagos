@@ -1,9 +1,10 @@
-# NEXIA · pagos (Netlify Functions)
+# NEXIA · pagos
 
-Servicio de cobro de la tienda de NEXIA en `https://nexia-pagos.netlify.app`. Ver `README.md` para el flujo y las variables de entorno.
+Servicio de cobro de la tienda de NEXIA. Se está pasando de Netlify (`https://nexia-pagos.netlify.app`, despliegues pausados por créditos) a Cloudflare Workers (`worker/index.mjs`, `wrangler.toml`). Ver `README.md` para el flujo y las variables de entorno.
 
 ## Estructura
-- `netlify/functions/crear-pago.mjs` y `webhook-stripe.mjs`: solo leen variables de entorno y montan dependencias reales (Stripe, Netlify Blobs, Resend).
+- `worker/index.mjs` (Cloudflare) y `netlify/functions/*.mjs` (Netlify): solo leen la configuración y montan dependencias reales (Stripe, almacén, Resend). En Cloudflare el almacén es KV (`almacenKV`), con la misma interfaz que Netlify Blobs.
+- El webhook usa `constructEventAsync` y responde 500 si aún no ve el pedido (KV tarda unos segundos en propagarse): Stripe lo reintenta.
 - `lib/handlers.mjs`: toda la lógica, con dependencias inyectadas (`stripe`, `store`, `env`, `enviar`, `esperar`) para poder probarla con simulaciones.
 - `lib/pricing.mjs`: calcula el pedido. **El precio se calcula siempre aquí; nunca se fía del importe que manda el navegador.**
 - `lib/precios.cjs`: tabla de precios. Es una **copia exacta** de `nexia-web/precios.js`, la única fuente. No la edites aquí: cambia la web y ejecuta `npm run sync-precios`.

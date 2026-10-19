@@ -1,0 +1,14 @@
+# Cloudflare Workers: el mismo servicio de pagos que en Netlify (ver worker/index.mjs).
+name = "nexia-pagos"
+main = "worker/index.mjs"
+compatibility_date = "2025-09-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Página de prueba interna (public/prueba-pago); las rutas /api/* las atiende el worker.
+[assets]
+directory = "public"
+
+# Almacén de pedidos (Cloudflare > Storage & databases > Workers KV > nexia-pedidos)
+[[kv_namespaces]]
+binding = "PEDIDOS"
+id = "PENDIENTE_ID_KV"
