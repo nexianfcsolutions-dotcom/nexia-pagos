@@ -4,6 +4,14 @@ main = "worker/index.mjs"
 compatibility_date = "2025-09-01"
 compatibility_flags = ["nodejs_compat"]
 
+# Dirección pública: https://nexia-pagos.nexianfcsolutions.workers.dev (la usan la web y el webhook de Stripe)
+workers_dev = true
+preview_urls = false
+
+# Registros de cada petición (Cloudflare > nexia-pagos > Observability), para revisar pedidos y errores
+[observability]
+enabled = true
+
 # Página de prueba interna (public/prueba-pago); las rutas /api/* las atiende el worker.
 [assets]
 directory = "public"
