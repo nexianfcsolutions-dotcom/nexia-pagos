@@ -1,4 +1,4 @@
-// Entrada para Cloudflare Workers. Hace lo mismo que netlify/functions/*: lee la configuración y monta
+// Entrada del servicio de pagos (Cloudflare Workers): lee la configuración y monta
 // las dependencias reales (Stripe, almacén de pedidos en Cloudflare KV, correo con Resend). Toda la lógica está en lib/handlers.mjs.
 // Secretos (Cloudflare > Workers > nexia-pagos > Settings > Variables and Secrets): STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, RESEND_API_KEY.
 // Opcionales: SELLER_EMAIL, SITE_URL, FROM_EMAIL, USAR_STRIPE_TAX. Almacén: KV con el nombre de enlace PEDIDOS (wrangler.toml).
@@ -8,7 +8,7 @@ import { crearPagoHandler, webhookHandler, resendSender, respuestaError } from '
 const CLAVES = ['STRIPE_WEBHOOK_SECRET', 'RESEND_API_KEY', 'SELLER_EMAIL', 'SITE_URL', 'FROM_EMAIL', 'USAR_STRIPE_TAX'];
 const ARCHIVOS_TTL = 30 * 24 * 3600; // los archivos de pedidos que nunca se pagan se borran solos a los 30 días
 
-// Adaptador: misma interfaz que Netlify Blobs (set, setJSON, get, delete) sobre Cloudflare KV.
+// Adaptador del almacén (set, setJSON, get, delete) sobre Cloudflare KV.
 export function almacenKV(kv) {
   return {
     set: (k, v) => kv.put(k, v, { expirationTtl: ARCHIVOS_TTL }),
